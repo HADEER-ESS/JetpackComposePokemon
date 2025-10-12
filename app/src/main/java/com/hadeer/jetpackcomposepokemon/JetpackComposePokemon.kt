@@ -5,8 +5,4 @@ import dagger.hilt.android.HiltAndroidApp
 
 
 @HiltAndroidApp
-class JetpackComposePokemon : Application() {
-    override fun onCreate() {
-        super.onCreate()
-    }
-}
+class JetpackComposePokemon : Application()
