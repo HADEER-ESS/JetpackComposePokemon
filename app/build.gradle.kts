@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.runtime.livedata)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -79,8 +80,8 @@ dependencies {
 
     //Coil
     //For loading th images from network
-    implementation(libs.coil)
-    implementation(libs.accompanist.coil)
+    implementation(libs.coil.compose)
+
 
     //Dagger - Hilt
     implementation(libs.hilt.android)
@@ -88,4 +89,7 @@ dependencies {
 
     // Hilt Navigation for Compose
     implementation(libs.androidx.hilt.navigation.compose.v120)
+
+    //Palette
+    implementation(libs.androidx.palette)
 }
