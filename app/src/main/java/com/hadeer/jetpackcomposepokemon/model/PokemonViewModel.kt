@@ -4,13 +4,19 @@ import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.intl.Locale
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.palette.graphics.Palette
+import com.hadeer.jetpackcomposepokemon.data.remote.Constant.PAGE_SIZE
+import com.hadeer.jetpackcomposepokemon.data.remote.Constant.POKEMON_IMAGE_URL
 import com.hadeer.jetpackcomposepokemon.data.remote.NetworkResponse
+import com.hadeer.jetpackcomposepokemon.data.remote.response.PokemonItem
 import com.hadeer.jetpackcomposepokemon.repository.PokemonRepoImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -21,14 +27,15 @@ import javax.inject.Inject
 class PokemonViewModel @Inject constructor(
     private val pokemonRepoImpl: PokemonRepoImpl
 ) : ViewModel() {
-    private val _pokemonData = MutableLiveData<List<PokemonItemEntry>>()
-    val pokemonData : LiveData<List<PokemonItemEntry>> = _pokemonData
+    var currantOffset = 0
+    val pokemonData = mutableStateOf<List<PokemonItemEntry>>(listOf())
+    val isLoading  = mutableStateOf(false)
+    val isError = mutableStateOf("")
+    val atBottomOfScreen = mutableStateOf(false)
 
-    private val _isLoading = MutableLiveData<Boolean>()
-    val isLoading : LiveData<Boolean> = _isLoading
-
-    private val _isError = MutableLiveData<String>()
-    val isError : LiveData<String> = _isError
+    init {
+        getPokemonData()
+    }
 
     fun getDominantColor(
         drawable : Drawable,
@@ -48,29 +55,45 @@ class PokemonViewModel @Inject constructor(
 
      fun getPokemonData(){
         viewModelScope.launch {
-            _isLoading.value = true
-            val response = pokemonRepoImpl.getPokemonListData(20, 10)
+            isLoading.value = true
+            val response = pokemonRepoImpl.getPokemonListData(PAGE_SIZE, currantOffset * PAGE_SIZE)
 
             when(response){
                 is NetworkResponse.Success -> {
-                    _isLoading.value = false
-                    val list = response.body.mapIndexed { index, pokemonItem ->
-                        pokemonItem.toMap(index)
+                    atBottomOfScreen.value = currantOffset * PAGE_SIZE >= response.body.count!!
+                    val list = response.body.results?.mapIndexed { index, pokemonItem ->
+                        val number = if(pokemonItem?.url!!.endsWith("/")){
+                            pokemonItem.url.dropLast(1).takeLastWhile { it.isDigit() }
+                        }else{
+                            pokemonItem.url.takeLastWhile { it.isDigit() }
+                        }
+                        val imageUrl = "$POKEMON_IMAGE_URL$number.png"
+                        Log.i("the result image are " , imageUrl)
+                        PokemonItemEntry(
+                            pokemonId = number.toInt(),
+                            pokemonName =  pokemonItem.name!!.capitalize(Locale.current),
+                            pokemonImage = imageUrl
+                        )
                     }
                     Log.i("the result image are " , "$list")
-                    _pokemonData.value = list
+                    currantOffset++
+                    isError.value = ""
+                    isLoading.value = false
+                    if (list != null) {
+                        pokemonData.value = list
+                    }
                 }
                 is NetworkResponse.ApiError -> {
-                    _isLoading.value = false
-                    _isError.value = response.body
+                    isLoading.value = false
+                    isError.value = response.body
                 }
                 is NetworkResponse.NetworkError ->{
-                    _isLoading.value = false
-                    _isError.value = "Something went wrong, Please try again later..."
+                    isLoading.value = false
+                    isError.value = "Something went wrong, Please try again later..."
                 }
                 is NetworkResponse.UnknownError ->{
-                    _isLoading.value = false
-                    _isError.value = "Unknow error, Please try again later..."
+                    isLoading.value = false
+                    isError.value = "Unknow error, Please try again later..."
                 }
             }
         }
