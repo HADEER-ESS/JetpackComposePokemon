@@ -76,13 +76,13 @@ fun PokemonListScreen(
     modifier: Modifier = Modifier,
     viewModel: PokemonViewModel = hiltViewModel()
 ){
-    val pokemonList by viewModel.pokemonData.observeAsState(emptyList())
-    val isLoading by viewModel.isLoading.observeAsState(false)
-    val error by viewModel.isError.observeAsState("")
+    val pokemonList by remember { viewModel.pokemonData }
+    val isLoading by remember { viewModel.isLoading }
+    val error by remember { viewModel.isError }
 
-    LaunchedEffect(Unit) {
-        viewModel.getPokemonData()
-    }
+//    LaunchedEffect(Unit) {
+//        viewModel.getPokemonData()
+//    }
     Surface(
         color = MaterialTheme.colorScheme.background,
         modifier = modifier.fillMaxSize()
@@ -254,8 +254,10 @@ fun PokemonItem(
 fun PokemonDisplayList(
     modifier: Modifier = Modifier,
     pokemonRenderList : List<PokemonItemEntry>,
-    navController: NavController
+    navController: NavController,
+    viewModel: PokemonViewModel = hiltViewModel()
 ){
+    val atBottom by remember { viewModel.atBottomOfScreen }
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.fillMaxSize(),
@@ -263,7 +265,15 @@ fun PokemonDisplayList(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+//        val itemCount = if(pokemonRenderList.size %2 == 0){
+//            pokemonRenderList.size / 2
+//        }else{
+//            pokemonRenderList.size / 2 +1
+//        }
         items(pokemonRenderList){pokemonItem ->
+//            if(pokemonItem.pokemonId >= itemCount-1 && !atBottom){
+//                viewModel.getPokemonData()
+//            }
             PokemonItem(pokemonItem, navController)
         }
     }
