@@ -3,6 +3,7 @@ package com.hadeer.jetpackcomposepokemon.repository
 import com.hadeer.jetpackcomposepokemon.data.remote.NetworkResponse
 import com.hadeer.jetpackcomposepokemon.data.remote.Resource
 import com.hadeer.jetpackcomposepokemon.data.remote.ServerApi
+import com.hadeer.jetpackcomposepokemon.data.remote.response.AllPokemonResponse
 import com.hadeer.jetpackcomposepokemon.data.remote.response.PokemonItem
 import com.hadeer.jetpackcomposepokemon.data.remote.response.SinglePokemonResponse
 import dagger.hilt.android.scopes.ActivityScoped
@@ -15,11 +16,11 @@ class PokemonRepoImpl @Inject constructor(
     override suspend fun getPokemonListData(
         limit: Int,
         offset: Int
-    ): NetworkResponse<List<PokemonItem>> {
+    ): NetworkResponse<AllPokemonResponse> {
         val response = serverApi.getPokemonList(limit, offset)
 
         if(response.isSuccessful){
-            val result = response.body()?.results?.filterNotNull().orEmpty()
+            val result = response.body()!!
             return NetworkResponse.Success(result)
         }
         else if(response.code() == 404){
