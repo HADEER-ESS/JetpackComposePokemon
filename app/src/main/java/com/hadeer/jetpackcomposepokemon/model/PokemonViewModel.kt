@@ -19,7 +19,9 @@ import com.hadeer.jetpackcomposepokemon.data.remote.NetworkResponse
 import com.hadeer.jetpackcomposepokemon.data.remote.response.PokemonItem
 import com.hadeer.jetpackcomposepokemon.repository.PokemonRepoImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import okhttp3.Dispatcher
 import javax.inject.Inject
 
 
@@ -33,8 +35,47 @@ class PokemonViewModel @Inject constructor(
     val isError = mutableStateOf("")
     val atBottomOfScreen = mutableStateOf(false)
 
+    //VALUES FOR SEARCH
+    //Temporary storage to store the last POKEMON list
+    private var temporaryStorage = listOf<PokemonItemEntry>()
+    //check if the SEARCH BAR is empty and available to search in
+    private var ableToSearch = true
+    //state for search condition // if I am searching now or not
+    val isSearching = mutableStateOf(false)
+
     init {
         getPokemonData()
+    }
+
+    fun pokemonSearch(query : String){
+        val persistPokemonList = if(ableToSearch){
+            pokemonData.value
+        }
+        else{
+            temporaryStorage
+        }
+        //make search in list in DEFAULT LAYER (CPU) as it considered as HEAVY action
+        //to prevent UI lagging
+        viewModelScope.launch(Dispatchers.Default){
+            //CASE : if user enter NOTING to search
+            if(query.isEmpty()){
+                pokemonData.value = temporaryStorage
+                ableToSearch = true
+                isSearching.value = false
+                return@launch
+            }
+            val result = persistPokemonList.filter {
+                it.pokemonName.contains(query.trim() , ignoreCase = false)
+            }
+            if(ableToSearch){
+                //store the previous data list
+                temporaryStorage = pokemonData.value
+                isSearching.value = false
+            }
+            pokemonData.value = result
+            isSearching.value = true
+            ableToSearch = false
+        }
     }
 
     fun getDominantColor(
@@ -53,7 +94,7 @@ class PokemonViewModel @Inject constructor(
         }
     }
 
-     fun getPokemonData(){
+     private fun getPokemonData(){
         viewModelScope.launch {
             isLoading.value = true
             val response = pokemonRepoImpl.getPokemonListData(PAGE_SIZE, currantOffset * PAGE_SIZE)
@@ -68,14 +109,12 @@ class PokemonViewModel @Inject constructor(
                             pokemonItem.url.takeLastWhile { it.isDigit() }
                         }
                         val imageUrl = "$POKEMON_IMAGE_URL$number.png"
-                        Log.i("the result image are " , imageUrl)
                         PokemonItemEntry(
                             pokemonId = number.toInt(),
                             pokemonName =  pokemonItem.name!!.capitalize(Locale.current),
                             pokemonImage = imageUrl
                         )
                     }
-                    Log.i("the result image are " , "$list")
                     currantOffset++
                     isError.value = ""
                     isLoading.value = false
