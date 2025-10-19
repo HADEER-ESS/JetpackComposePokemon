@@ -1,6 +1,6 @@
 package com.hadeer.jetpackcomposepokemon.di
 
-import com.hadeer.jetpackcomposepokemon.data.remote.Constant.API_SERVICE
+import com.hadeer.jetpackcomposepokemon.util.Constant.API_SERVICE
 import com.hadeer.jetpackcomposepokemon.data.remote.ServerApi
 import com.hadeer.jetpackcomposepokemon.repository.PokemonRepoImpl
 import dagger.Module

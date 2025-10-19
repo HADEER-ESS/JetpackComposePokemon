@@ -1,4 +1,4 @@
-package com.hadeer.jetpackcomposepokemon.data.remote
+package com.hadeer.jetpackcomposepokemon.util
 
 object Constant {
     const val API_SERVICE = "https://pokeapi.co/api/v2/"
