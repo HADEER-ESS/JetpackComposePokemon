@@ -1,10 +1,9 @@
 package com.hadeer.jetpackcomposepokemon.repository
 
-import com.hadeer.jetpackcomposepokemon.data.remote.NetworkResponse
-import com.hadeer.jetpackcomposepokemon.data.remote.Resource
+import com.hadeer.jetpackcomposepokemon.util.NetworkResponse
+import com.hadeer.jetpackcomposepokemon.util.Resource
 import com.hadeer.jetpackcomposepokemon.data.remote.ServerApi
 import com.hadeer.jetpackcomposepokemon.data.remote.response.AllPokemonResponse
-import com.hadeer.jetpackcomposepokemon.data.remote.response.PokemonItem
 import com.hadeer.jetpackcomposepokemon.data.remote.response.SinglePokemonResponse
 import dagger.hilt.android.scopes.ActivityScoped
 import javax.inject.Inject
