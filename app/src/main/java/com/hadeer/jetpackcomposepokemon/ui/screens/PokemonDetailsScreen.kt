@@ -1,5 +1,7 @@
 package com.hadeer.jetpackcomposepokemon.ui.screens
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,17 +24,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.filled.Height
-import androidx.compose.material.icons.filled.Square
+import com.hadeer.jetpackcomposepokemon.R
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +41,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -50,8 +52,11 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.hadeer.jetpackcomposepokemon.util.Resource
 import com.hadeer.jetpackcomposepokemon.data.remote.response.SinglePokemonResponse
+import com.hadeer.jetpackcomposepokemon.data.remote.response.StatsItem
 import com.hadeer.jetpackcomposepokemon.data.remote.response.TypesItem
 import com.hadeer.jetpackcomposepokemon.model.PokemonDetailsViewModel
+import com.hadeer.jetpackcomposepokemon.util.parseStatToColor
+import com.hadeer.jetpackcomposepokemon.util.parseStatToTitle
 import com.hadeer.jetpackcomposepokemon.util.pokemonParse
 import java.util.Locale
 import kotlin.math.round
@@ -242,6 +247,12 @@ fun PokemonDetailsSection(
             wightValue = pokemonInfo.weight!!,
             heightValue = pokemonInfo.height!!
         )
+        PokemonBaseStateSection(
+            stateData = pokemonInfo.stats!!,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
+        )
     }
 }
 
@@ -297,9 +308,9 @@ fun PokemonDetailsDataSection(
             .padding(vertical = 16.dp)
     ){
         PokemonDetailsDataItem(
-            detailsIcon = Icons.Default.Square,
+            detailsIcon = R.drawable.ic_weight  ,
             detailsValue = wightInKilos,
-            detailsUnity = "KG",
+            detailsUnity = "kg",
             modifier = Modifier.weight(1f)
         )
         Spacer(
@@ -309,10 +320,10 @@ fun PokemonDetailsDataSection(
                 .background(Color.LightGray)
         )
         PokemonDetailsDataItem(
-            detailsIcon = Icons.Default.Height,
             detailsValue = heightInMeters,
             detailsUnity = "M",
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            detailsIcon = R.drawable.ic_height
         )
     }
 }
@@ -320,7 +331,7 @@ fun PokemonDetailsDataSection(
 
 @Composable
 fun PokemonDetailsDataItem(
-    detailsIcon : ImageVector,
+    detailsIcon : Int,
     detailsUnity : String,
     detailsValue : Float,
     modifier: Modifier = Modifier
@@ -332,7 +343,7 @@ fun PokemonDetailsDataItem(
         modifier = modifier
     ){
         Icon(
-            imageVector = detailsIcon,
+            painter = painterResource(detailsIcon),
             contentDescription = null,
             tint = Color.Black,
             modifier = Modifier.size(30.dp)
@@ -343,5 +354,95 @@ fun PokemonDetailsDataItem(
             color = Color.Black,
             fontSize = 18.sp
         )
+    }
+}
+
+@Composable
+fun PokemonBaseStateSection(
+    stateData: List<StatsItem?>,
+    animDelay: Int = 100,
+    modifier: Modifier = Modifier
+){
+
+    val maxStatValue = remember {
+        stateData.maxOf { it?.baseStat!! }
+    }
+    Column(
+        modifier = modifier
+    ){
+        Text(
+            text = "Base Stats",
+            textAlign = TextAlign.Start,
+            color = Color.Black,
+            fontSize = 24.sp
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        for(idx in stateData.indices){
+            val statItem = stateData[idx]
+            PokemonStatItem(
+                statName = parseStatToTitle(statItem?.stat?.name!!) ,
+                statValue = statItem.baseStat!! ,
+                statColor = parseStatToColor(statItem.stat.name),
+                statMaxValue = maxStatValue ,
+                animationDelay = idx * animDelay ,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+fun PokemonStatItem(
+    statName : String,
+    statValue: Int,
+    statMaxValue:Int,
+    statColor : Color,
+    animationDuration: Int = 100,
+    animationDelay: Int
+){
+    //to create the animation effect
+    var isAnimate by remember {
+        mutableStateOf(false)
+    }
+    val currentAnim = animateFloatAsState(
+        targetValue = if(isAnimate){
+            statValue / statMaxValue.toFloat()
+        }else 0f,
+        animationSpec = tween(
+            durationMillis =animationDuration ,
+            delayMillis = animationDelay
+        )
+    ).value
+    LaunchedEffect(true) {
+        isAnimate = true
+    }
+    Box(
+        contentAlignment = Alignment.CenterStart,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(28.dp)
+            .clip(CircleShape)
+            .background(Color.LightGray)
+    ){
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(currentAnim)
+                .clip(CircleShape)
+                .background(statColor)
+                .padding(horizontal = 10.dp)
+        ){
+            Text(
+                text = statName,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = statValue.toString(),
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
