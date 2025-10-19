@@ -96,14 +96,21 @@ fun PokemonListScreen(
                     )
                 }
                 error.isNotEmpty() -> {
-                    Text(
-                        text = error,
-                        textAlign = TextAlign.Center,
-                        style = TextStyle(
-                            color = Color.Black,
-                            fontSize =  24.sp
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ){
+                        Text(
+                            text = error,
+                            textAlign = TextAlign.Center,
+                            style = TextStyle(
+                                color = Color.Red,
+                                fontSize =  24.sp
+                            )
                         )
-                    )
+                    }
+
                 }
                 else -> {
                     PokemonDisplayList(

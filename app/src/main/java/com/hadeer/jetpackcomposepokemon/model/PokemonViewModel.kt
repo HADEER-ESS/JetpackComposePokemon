@@ -22,6 +22,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.Dispatcher
+import java.io.IOException
+import java.lang.Exception
 import javax.inject.Inject
 
 
@@ -97,43 +99,54 @@ class PokemonViewModel @Inject constructor(
      private fun getPokemonData(){
         viewModelScope.launch {
             isLoading.value = true
-            val response = pokemonRepoImpl.getPokemonListData(PAGE_SIZE, currantOffset * PAGE_SIZE)
-
-            when(response){
-                is NetworkResponse.Success -> {
-                    atBottomOfScreen.value = currantOffset * PAGE_SIZE >= response.body.count!!
-                    val list = response.body.results?.mapIndexed { index, pokemonItem ->
-                        val number = if(pokemonItem?.url!!.endsWith("/")){
-                            pokemonItem.url.dropLast(1).takeLastWhile { it.isDigit() }
-                        }else{
-                            pokemonItem.url.takeLastWhile { it.isDigit() }
+            try {
+                val response = pokemonRepoImpl.getPokemonListData(PAGE_SIZE, currantOffset * PAGE_SIZE)
+                when(response){
+                    is NetworkResponse.Success -> {
+                        atBottomOfScreen.value = currantOffset * PAGE_SIZE >= response.body.count!!
+                        val list = response.body.results?.mapIndexed { index, pokemonItem ->
+                            val number = if(pokemonItem?.url!!.endsWith("/")){
+                                pokemonItem.url.dropLast(1).takeLastWhile { it.isDigit() }
+                            }else{
+                                pokemonItem.url.takeLastWhile { it.isDigit() }
+                            }
+                            val imageUrl = "$POKEMON_IMAGE_URL$number.png"
+                            PokemonItemEntry(
+                                pokemonId = number.toInt(),
+                                pokemonName =  pokemonItem.name!!.capitalize(Locale.current),
+                                pokemonImage = imageUrl
+                            )
                         }
-                        val imageUrl = "$POKEMON_IMAGE_URL$number.png"
-                        PokemonItemEntry(
-                            pokemonId = number.toInt(),
-                            pokemonName =  pokemonItem.name!!.capitalize(Locale.current),
-                            pokemonImage = imageUrl
-                        )
+                        currantOffset++
+                        isError.value = ""
+                        isLoading.value = false
+                        if (list != null) {
+                            pokemonData.value = list
+                        }
                     }
-                    currantOffset++
-                    isError.value = ""
-                    isLoading.value = false
-                    if (list != null) {
-                        pokemonData.value = list
+                    is NetworkResponse.ApiError -> {
+                        isLoading.value = false
+                        isError.value = response.body
+                    }
+                    is NetworkResponse.NetworkError ->{
+                        isLoading.value = false
+                        isError.value = "Something went wrong, Please try again later..."
+                    }
+                    is NetworkResponse.UnknownError ->{
+                        isLoading.value = false
+                        isError.value = "Unknow error, Please try again later..."
                     }
                 }
-                is NetworkResponse.ApiError -> {
-                    isLoading.value = false
-                    isError.value = response.body
-                }
-                is NetworkResponse.NetworkError ->{
-                    isLoading.value = false
-                    isError.value = "Something went wrong, Please try again later..."
-                }
-                is NetworkResponse.UnknownError ->{
-                    isLoading.value = false
-                    isError.value = "Unknow error, Please try again later..."
-                }
+            }
+            catch (error : IOException){
+                Log.e("get pokemon data in IOException" , error.message!!)
+                isError.value = "No internet connection"
+                isLoading.value = false
+            }
+            catch (error : Exception){
+                Log.e("get pokemon data in Exception" , error.message!!)
+                isError.value = "Unexpected error: ${error.localizedMessage}"
+                isLoading.value = false
             }
         }
     }
