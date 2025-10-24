@@ -6,8 +6,8 @@ import com.hadeer.jetpackcomposepokemon.data.remote.response.TypesItem
 import com.hadeer.jetpackcomposepokemon.ui.theme.*
 import java.util.Locale
 
-fun pokemonParse(type : TypesItem): Color{
-    return when(type.type?.name?.toLowerCase(Locale.ROOT)){
+fun pokemonParse(type : String): Color{
+    return when(type.toLowerCase(Locale.ROOT)){
         "normal" -> TypeNormal
         "fire" -> TypeFire
         "water" -> TypeWater
