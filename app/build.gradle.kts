@@ -93,4 +93,11 @@ dependencies {
 
     //Palette
     implementation(libs.androidx.palette)
+
+    //Widget
+    implementation(libs.androidx.glance.appwidget)
+// Optional: only if you want to use Material3
+    implementation(libs.androidx.glance.material3)
+
+    implementation(libs.androidx.datastore.preferences)
 }
