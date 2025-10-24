@@ -1,5 +1,7 @@
 package com.hadeer.jetpackcomposepokemon.ui.screens
 
+import android.content.Context
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -24,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material3.Button
 import com.hadeer.jetpackcomposepokemon.R
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -40,7 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,9 +58,11 @@ import com.hadeer.jetpackcomposepokemon.data.remote.response.SinglePokemonRespon
 import com.hadeer.jetpackcomposepokemon.data.remote.response.StatsItem
 import com.hadeer.jetpackcomposepokemon.data.remote.response.TypesItem
 import com.hadeer.jetpackcomposepokemon.model.PokemonDetailsViewModel
+import com.hadeer.jetpackcomposepokemon.util.WidgetUpdater
 import com.hadeer.jetpackcomposepokemon.util.parseStatToColor
 import com.hadeer.jetpackcomposepokemon.util.parseStatToTitle
 import com.hadeer.jetpackcomposepokemon.util.pokemonParse
+import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.round
 
@@ -118,6 +123,7 @@ fun DetailsScreen(
                         content = pokemonInfo.data?.name!!,
                         imageSize = imageSize,
                         topPadding = topPadding,
+                        dominantColor = dominantColor,
                         imageModifier = Modifier
                             .fillMaxWidth()
                             .wrapContentWidth(Alignment.CenterHorizontally)
@@ -125,8 +131,6 @@ fun DetailsScreen(
                     )
                 }
             }
-
-
 
     }
 }
@@ -168,15 +172,24 @@ fun PokemonMainImageSection(
     content:String,
     imageSize: Dp,
     topPadding: Dp,
+    dominantColor: Color,
     imageModifier: Modifier = Modifier
 ){
-    Box(modifier = imageModifier){
+    Column(modifier = imageModifier){
         AsyncImage(
             model = imageResource,
             contentDescription = content,
             modifier = Modifier
                 .size(imageSize)
                 .offset(y = topPadding)
+        )
+        UpdateWidgetContent(
+            image = imageResource,
+            dominantColor = dominantColor,
+            modifier = Modifier
+                .padding(vertical = topPadding)
+                .fillMaxWidth()
+                .align(Alignment.Start)
         )
     }
 }
@@ -275,7 +288,7 @@ fun PokemonTypeListSection(
                     .padding(8.dp)
                     .clip(CircleShape)
                     .height(30.dp)
-                    .background(pokemonParse(type!!))
+                    .background(pokemonParse(type?.type?.name!!))
             ){
                 Text(
                     text = type.type?.name!!,
@@ -444,5 +457,32 @@ fun PokemonStatItem(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+
+@Composable
+fun UpdateWidgetContent(
+    image : String,
+    dominantColor : Color,
+    modifier: Modifier = Modifier
+){
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    Button(
+        onClick = {
+            scope.launch {
+                Log.i("widget data " , "image source: $image and color domain is $dominantColor")
+                WidgetUpdater.updatePokemonWidget(
+                    context = context,
+                    source = image,
+                    color = dominantColor
+                )
+            }
+        }
+    ) {
+        Text(
+            text = "Set on Widget"
+        )
     }
 }
