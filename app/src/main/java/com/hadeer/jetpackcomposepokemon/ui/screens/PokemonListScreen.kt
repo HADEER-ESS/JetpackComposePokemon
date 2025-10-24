@@ -253,15 +253,8 @@ fun PokemonDisplayList(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-//        val itemCount = if(pokemonRenderList.size %2 == 0){
-//            pokemonRenderList.size / 2
-//        }else{
-//            pokemonRenderList.size / 2 +1
-//        }
+
         items(pokemonRenderList){pokemonItem ->
-//            if(pokemonItem.pokemonId >= itemCount-1 && !atBottom){
-//                viewModel.getPokemonData()
-//            }
             PokemonItem(pokemonItem, navController)
         }
     }
