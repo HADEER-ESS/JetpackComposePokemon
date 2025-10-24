@@ -2,8 +2,10 @@ package com.hadeer.jetpackcomposepokemon.ui.screens
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import com.hadeer.jetpackcomposepokemon.R
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -93,6 +96,7 @@ fun DetailsScreen(
         )
             PokemonDetailsInfo(
                 pokemonInfo = pokemonInfo,
+                dominantColor = dominantColor,
                 loadingModifier = Modifier
                     .size(100.dp)
                     .align(Alignment.Center)
@@ -123,7 +127,6 @@ fun DetailsScreen(
                         content = pokemonInfo.data?.name!!,
                         imageSize = imageSize,
                         topPadding = topPadding,
-                        dominantColor = dominantColor,
                         imageModifier = Modifier
                             .fillMaxWidth()
                             .wrapContentWidth(Alignment.CenterHorizontally)
@@ -172,10 +175,9 @@ fun PokemonMainImageSection(
     content:String,
     imageSize: Dp,
     topPadding: Dp,
-    dominantColor: Color,
     imageModifier: Modifier = Modifier
 ){
-    Column(modifier = imageModifier){
+    Box(modifier = imageModifier){
         AsyncImage(
             model = imageResource,
             contentDescription = content,
@@ -183,20 +185,13 @@ fun PokemonMainImageSection(
                 .size(imageSize)
                 .offset(y = topPadding)
         )
-        UpdateWidgetContent(
-            image = imageResource,
-            dominantColor = dominantColor,
-            modifier = Modifier
-                .padding(vertical = topPadding)
-                .fillMaxWidth()
-                .align(Alignment.Start)
-        )
     }
 }
 
 @Composable
 fun PokemonDetailsInfo(
     pokemonInfo : Resource<SinglePokemonResponse>,
+    dominantColor: Color,
     loadingModifier : Modifier = Modifier,
     modifier : Modifier = Modifier
 ){
@@ -210,6 +205,7 @@ fun PokemonDetailsInfo(
         is Resource.Success -> {
             PokemonDetailsSection(
                pokemonInfo =  pokemonInfo.data!!,
+                dominantColor = dominantColor,
                 modifier = modifier
                     .fillMaxSize()
             )
@@ -229,6 +225,7 @@ fun PokemonDetailsInfo(
 @Composable
 fun PokemonDetailsSection(
     pokemonInfo : SinglePokemonResponse,
+    dominantColor: Color,
     modifier: Modifier = Modifier
 ){
     val scrollState = rememberScrollState()
@@ -264,6 +261,13 @@ fun PokemonDetailsSection(
             stateData = pokemonInfo.stats!!,
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(top = 16.dp)
+        )
+        UpdateWidgetContent(
+            image = pokemonInfo.sprites?.frontDefault!!,
+            dominantColor = dominantColor,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
                 .padding(top = 16.dp)
         )
     }
@@ -470,19 +474,41 @@ fun UpdateWidgetContent(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     Button(
+        colors = ButtonColors(
+            containerColor = Color.Transparent,
+            contentColor = Color.Black,
+            disabledContentColor = Color.Black,
+            disabledContainerColor = Color.White
+        ),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp,dominantColor),
+        modifier = modifier,
         onClick = {
             scope.launch {
-                Log.i("widget data " , "image source: $image and color domain is $dominantColor")
-                WidgetUpdater.updatePokemonWidget(
+                val success = WidgetUpdater.updatePokemonWidget(
                     context = context,
                     source = image,
                     color = dominantColor
                 )
+                if(success){
+                    Toast.makeText(
+                        context,
+                        "Pokemon added to widget!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                else{
+                    Toast.makeText(
+                        context,
+                        "Failed to update widget",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     ) {
         Text(
-            text = "Set on Widget"
+            text = "Add to Widget"
         )
     }
 }
